@@ -1,7 +1,9 @@
-export const getLeetCodeTimes = (): Promise<Record<string, number>> => {
-  return new Promise((resolve) => {
-    chrome.storage.local.get('leetcodeTimes', (result) => {
-      resolve(result.leetcodeTimes || {});
-    });
-  });
+export const getTimeData = async () => {
+  return chrome.storage.local
+    .get('timeData')
+    .then((data) => data.timeData || []);
+};
+
+export const clearTimeData = async () => {
+  return chrome.storage.local.set({ timeData: [] });
 };

@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { getLeetCodeTimes } from '../utils/storage';
+import { useEffect, useState } from 'react';
 
-const TimeList: React.FC = () => {
-  const [times, setTimes] = useState<Record<string, number>>({});
+const TimeList = () => {
+  const [timeData, setTimeData] = useState<
+    { problemName: string; duration: string }[]
+  >([]);
 
   useEffect(() => {
-    getLeetCodeTimes().then(setTimes);
+    // Fetch time data from chrome.storage
+    chrome.storage.local.get('timeData', (data) => {
+      setTimeData(data.timeData || []);
+    });
   }, []);
 
   return (
     <div>
-      <h2>Time Spent on Problems</h2>
+      <h2>Time Spent on LeetCode Problems</h2>
       <ul>
-        {Object.entries(times).map(([problem, seconds]) => (
-          <li key={problem}>
-            <strong>{problem}</strong>: {Math.floor(seconds / 60)}m{' '}
-            {seconds % 60}s
+        {timeData.map((entry, index) => (
+          <li key={index}>
+            <strong>{entry.problemName}</strong>: {entry.duration}
           </li>
         ))}
       </ul>

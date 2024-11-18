@@ -4,7 +4,7 @@ import TimeList from './TimeList';
 const Popup: React.FC = () => {
   return (
     <div>
-      <h1>LeetCode Tracker</h1>
+      <h2>LeetCode Tracker</h2>
       <TimeList />
     </div>
   );

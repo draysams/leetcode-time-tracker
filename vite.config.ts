@@ -23,7 +23,16 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './index.html',
+        background: 'src/background/background.ts',
       },
+      output: {
+        format: 'es',
+      },
+    },
+  },
+  resolve: {
+    alias: {
+      'webextension-polyfill': 'webextension-polyfill/dist/browser-polyfill.js',
     },
   },
 });
