@@ -11,6 +11,7 @@ node_modules
 build
 build-ssr
 *.local
+tsconfig.tsbuildinfo
 
 src/*/*.js
 src/*.js
@@ -25,3 +26,4 @@ src/*.js
 *.njsproj
 *.sln
 *.sw?
+

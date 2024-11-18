@@ -1,24 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { getLeetCodeTimes } from '../utils/storage';
+import React from 'react';
+import { Session } from '../types'; // Import the Session type
 
-const TimeList: React.FC = () => {
-  const [times, setTimes] = useState<Record<string, number>>({});
+interface TimeListProps {
+  sessions: Session[];
+}
 
-  useEffect(() => {
-    getLeetCodeTimes().then(setTimes);
-  }, []);
-
+const TimeList: React.FC<TimeListProps> = ({ sessions }) => {
   return (
     <div>
-      <h2>Time Spent on Problems</h2>
-      <ul>
-        {Object.entries(times).map(([problem, seconds]) => (
-          <li key={problem}>
-            <strong>{problem}</strong>: {Math.floor(seconds / 60)}m{' '}
-            {seconds % 60}s
-          </li>
-        ))}
-      </ul>
+      {sessions.map((session, index) => (
+        <div key={index} className='session-card'>
+          <div className='card-header'>
+            <strong className='problem-name'>{session.problemName}</strong>
+            <span className='time-spent'>
+              {Math.floor(session.elapsedTime / 60)} min{' '}
+              {Math.floor(session.elapsedTime % 60)} sec
+            </span>
+          </div>
+          <div className='card-details'>
+            <p>
+              <em>Started at:</em>{' '}
+              {new Date(session.startTime).toLocaleString()}
+            </p>
+            <p>
+              <em>Ended at:</em> {new Date(session.endTime).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
