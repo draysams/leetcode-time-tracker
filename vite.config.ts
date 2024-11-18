@@ -15,6 +15,10 @@ export default defineConfig({
           src: 'src/background/background.js', // The source background script
           dest: 'background', // The target folder in the build output
         },
+        {
+          src: 'src/contentScript.js', // The source background script
+          dest: '.', // The target folder in the build output
+        },
       ],
     }),
   ],

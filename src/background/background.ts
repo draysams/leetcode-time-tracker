@@ -1,94 +1,86 @@
-let startTime: number | null = null;
-let lastUrl: string | null = null;
-let saveIntervalId: number | null = null;
+// background.ts
 
-const SAVE_INTERVAL_MS = 10000;
+// Store the active session in memory
+let activeSession: {
+  problemID: string;
+  problemName: string;
+  startTime: number;
+} | null = null;
 
-// Periodic save function
-function saveProgressPeriodically() {
-  if (startTime && lastUrl) {
-    // Calculate the time spent in seconds
-    const durationInSeconds = Math.round((Date.now() - startTime) / 1000); // Convert to seconds
+// Function to start the session for the problem
+function startSession(problemID: string, problemName: string) {
+  // If there's already an active session, don't start a new one
+  if (activeSession) {
+    console.log('Session already active:', activeSession);
+    return;
+  }
 
-    // Convert seconds to minutes and seconds format (mm:ss)
-    const minutes = Math.floor(durationInSeconds / 60);
-    const seconds = durationInSeconds % 60;
-    const timeFormatted = `${minutes}m ${seconds}s`; // Format time as "Xm Ys"
+  // Start a new session
+  activeSession = {
+    problemID,
+    problemName,
+    startTime: Date.now(), // Start time in milliseconds
+  };
 
-    // Save the progress
-    chrome.storage.local.get('timeData', (data) => {
-      const timeData = Array.isArray(data.timeData) ? data.timeData : [];
-      const index = timeData.findIndex((entry) => entry.url === lastUrl);
+  console.log(`Started session for problem ${problemName} (ID: ${problemID})`);
+}
 
-      // Check if we are on a problem page by looking at the URL
-      const isProblemPage = lastUrl?.includes('leetcode.com/problems/');
+// End session function (from previous example)
+function endSession() {
+  if (activeSession) {
+    const elapsedTime = Date.now() - activeSession.startTime;
+    console.log(
+      `Session ended for problem ${
+        activeSession.problemName
+      }. Time spent: ${elapsedTime / 1000} seconds`
+    );
 
-      if (isProblemPage) {
-        // Extract problem name from the page title (e.g., 'Problem name - Leetcode')
-        const pageTitle = document.title;
-        const problemName = pageTitle.split(' - Leetcode')[0]; // Get problem name by splitting the title
+    // Save session data in chrome.storage.local
+    const sessionData = {
+      problemID: activeSession.problemID,
+      problemName: activeSession.problemName,
+      startTime: activeSession.startTime,
+      endTime: Date.now(),
+      elapsedTime: elapsedTime / 1000, // Time in seconds
+    };
 
-        if (index > -1) {
-          // Update existing entry
-          timeData[index].duration += durationInSeconds;
-        } else {
-          // Add new entry
-          timeData.push({ problemName, duration: timeFormatted, url: lastUrl });
-        }
-
-        chrome.storage.local.set({ timeData });
-        console.log('Progress saved:', {
-          problemName,
-          duration: timeFormatted,
-        });
-      }
+    // Retrieve existing sessions from chrome.storage.local
+    chrome.storage.local.get(['sessions'], (result) => {
+      const sessions = result.sessions || [];
+      sessions.push(sessionData); // Add new session
+      chrome.storage.local.set({ sessions }, () => {
+        console.log('Session saved:', sessionData);
+      });
     });
 
-    // Reset startTime for the next interval
-    startTime = Date.now();
+    activeSession = null; // Clear active session
   }
 }
 
-// Start periodic saving
-function startSavingProgress() {
-  console.log('save');
-  if (saveIntervalId === null) {
-    saveIntervalId = (setInterval(
-      saveProgressPeriodically,
-      SAVE_INTERVAL_MS
-    ) as unknown) as number;
-  }
-}
-
-// Stop periodic saving
-function stopSavingProgress() {
-  console.log('stop save');
-  if (saveIntervalId !== null) {
-    clearInterval(saveIntervalId);
-    saveIntervalId = null;
-  }
-}
-
-// Detect problem page and start tracking
+// Listen for tab updates (URL change or tab switch)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  console.log(changeInfo);
-  if (
-    changeInfo.status === 'complete' &&
-    tab.url?.includes('leetcode.com/problems/')
-  ) {
-    console.log('Detected problem page:', tab.url);
-    startTime = Date.now();
-    lastUrl = tab.url;
-    startSavingProgress();
+  if (changeInfo.status === 'complete' && tab.url) {
+    // Check if the URL matches the LeetCode problem format
+    if (tab.url.includes('leetcode.com/problems/')) {
+      // Extract problem name from the page title
+      console.log(tab.title);
+      const problemName = tab.title?.substring(0, tab.title.indexOf(' -')); // Extract problem name
+      const problemID = tab.url.split('/')[4]; // Extract problem ID from the URL
+
+      console.log(
+        `LeetCode problem detected: ${problemName} (ID: ${problemID})`
+      );
+
+      // Start session for the detected problem
+      if (problemID && problemName) {
+        startSession(problemID, problemName);
+      }
+    }
   }
 });
 
-// Handle tab closures
+// Listen for tab closures to end the session when the tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
-  if (startTime) {
-    saveProgressPeriodically(); // Save progress one last time
-    stopSavingProgress(); // Stop periodic saving
-    startTime = null;
-    lastUrl = null;
-  }
+  console.log('Tab closed:', tabId);
+  endSession(); // End the session when the tab is closed
 });
