@@ -1,49 +1,33 @@
-// TimeList.tsx
+import React from 'react';
+import { Session } from '../types'; // Import the Session type
 
-import { useEffect, useState } from 'react';
+interface TimeListProps {
+  sessions: Session[];
+}
 
-const TimeList = () => {
-  const [sessions, setSessions] = useState<
-    {
-      problemName: string;
-      sessions: Array<{ startTime: number; endTime: number; duration: number }>;
-    }[]
-  >([]);
-
-  useEffect(() => {
-    chrome.storage.local.get('sessions', (data) => {
-      const sessionData = data.sessions || {};
-      const sessionList = Object.keys(sessionData).map((problemID) => {
-        const { problemName, sessions } = sessionData[problemID];
-        return { problemName, sessions };
-      });
-
-      setSessions(sessionList);
-    });
-  }, []);
-
+const TimeList: React.FC<TimeListProps> = ({ sessions }) => {
   return (
     <div>
-      <h2>Time Spent on LeetCode Problems</h2>
-      <ul>
-        {sessions.map((entry, index) => (
-          <li key={index}>
-            <strong>{entry.problemName}</strong>
-            <ul>
-              {entry.sessions.map((session, idx) => (
-                <li key={idx}>
-                  Session {idx + 1}:{' '}
-                  {new Date(session.startTime).toLocaleTimeString()} -{' '}
-                  {new Date(session.endTime).toLocaleTimeString()}
-                  <br />
-                  Duration: {Math.floor(session.duration / 60)}m{' '}
-                  {session.duration % 60}s
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
+      {sessions.map((session, index) => (
+        <div key={index} className='session-card'>
+          <div className='card-header'>
+            <strong className='problem-name'>{session.problemName}</strong>
+            <span className='time-spent'>
+              {Math.floor(session.elapsedTime / 60)} min{' '}
+              {Math.floor(session.elapsedTime % 60)} sec
+            </span>
+          </div>
+          <div className='card-details'>
+            <p>
+              <em>Started at:</em>{' '}
+              {new Date(session.startTime).toLocaleString()}
+            </p>
+            <p>
+              <em>Ended at:</em> {new Date(session.endTime).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

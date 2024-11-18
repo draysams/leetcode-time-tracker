@@ -1,5 +1,3 @@
-// background.ts
-
 // Store the active session in memory
 let activeSession: {
   problemID: string;

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import './styles/styles.css'; // Import the CSS file
+import { Session } from '../types'; // Import the Session type
+import './styles.css'; // Import the CSS file
+import TimeList from './TimeList'; // Import the TimeList component
 
 // Helper function to format date (e.g., "2024-11-18")
 const formatDate = (timestamp: number) => {
@@ -13,7 +15,7 @@ const formatDate = (timestamp: number) => {
 };
 
 const Popup = () => {
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
 
   // Load sessions from chrome.storage.local when the popup is opened
   useEffect(() => {
@@ -24,8 +26,8 @@ const Popup = () => {
   }, []);
 
   // Group sessions by date
-  const groupSessionsByDate = (sessions: any[]) => {
-    return sessions.reduce((groups: { [date: string]: any[] }, session) => {
+  const groupSessionsByDate = (sessions: Session[]) => {
+    return sessions.reduce((groups: { [date: string]: Session[] }, session) => {
       const date = formatDate(session.startTime); // Format the start time as a date string
       if (!groups[date]) {
         groups[date] = [];
@@ -45,28 +47,7 @@ const Popup = () => {
         <div key={date} className='date-group'>
           <h4 className='date-header'>{date}</h4>{' '}
           {/* Display the date as a divider */}
-          {groupedSessions[date].map((session: any, index: number) => (
-            <div key={index} className='session-card'>
-              <div className='card-header'>
-                <strong className='problem-name'>{session.problemName}</strong>
-                <span className='time-spent'>
-                  {Math.floor(session.elapsedTime / 60)} min{' '}
-                  {Math.floor(session.elapsedTime % 60)} sec
-                </span>
-              </div>
-              <div className='card-details'>
-                <p>
-                  <em>Started at:</em>{' '}
-                  {new Date(session.startTime).toLocaleString()}
-                </p>
-                <p>
-                  <em>Ended at:</em>{' '}
-                  {new Date(session.endTime).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          ))}
-          <div className='date-divider'></div>
+          <TimeList sessions={groupedSessions[date]} />
         </div>
       ))}
     </div>
